@@ -1,0 +1,197 @@
+{
+  "name": "AI Short-Form Video Script Generator",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "video-generator",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -576,
+        -96
+      ],
+      "id": "37e03232-1798-41f8-8e7c-fde4ddc9acb3",
+      "name": "Webhook",
+      "webhookId": "c81e7c36-a177-4b8b-ad2b-67f3f8e29cef"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "04c3b3e9-5fd1-4a50-b6cf-4ff9c19aa5f1",
+              "name": "topic",
+              "value": "={{ $json.body.topic }}",
+              "type": "string"
+            },
+            {
+              "id": "e91f0aa2-a2cd-4e24-b1d2-d26ed9caa016",
+              "name": "language",
+              "value": "={{ $json.body.language }}",
+              "type": "string"
+            },
+            {
+              "id": "c699785a-7fd7-4f0f-81a0-a4532e2478a0",
+              "name": "duration",
+              "value": "={{ $json.body.duration }}",
+              "type": "number"
+            },
+            {
+              "id": "f57c48fb-4ac0-4eb3-9eef-43676f891684",
+              "name": "style",
+              "value": "={{ $json.body.style }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -336,
+        -96
+      ],
+      "id": "364f3ac5-51a0-456f-a4ba-244d7c8bd4bf",
+      "name": "Normalize Input"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Write a  {{ $json.duration }}second {{ $json.style }} short-form video script in {{ $json.language }} about {{ $json.topic }}.\nTake the video script below and split it into scenes.\nReturn JSON only.\n\nFor each scene include:\n- scene_number\n- text\n- start_time (seconds)\n- end_time (seconds)\n- b_roll_query (short stock video search phrase)\n\nScript:\n{{ $json.text || $json.output || $json }}\n",
+        "hasOutputParser": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -112,
+        -96
+      ],
+      "id": "d8ba5c9a-e701-4829-87fd-e50d01fc6e31",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -112,
+        176
+      ],
+      "id": "e776256e-4136-444a-97e4-a4cb1adea1c3",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "BNFVQ7d5QTcE9IVG",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $json.output;\nconst cleaned = raw.replace(/```json|```/g, '').trim();\nconst scenes = JSON.parse(cleaned);\n\nreturn scenes.map(scene => ({\n  json: scene\n}));\n\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        272,
+        -96
+      ],
+      "id": "1f4cd30c-2af6-4ddf-a870-ac4a674916ef",
+      "name": "Parse Scenes JSON"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        512,
+        -96
+      ],
+      "id": "49410508-7e98-4132-9c30-f09e6540c77c",
+      "name": "Respond to Webhook"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Normalize Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Input": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Parse Scenes JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Scenes JSON": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "d29e6693-92f6-47f0-87c9-4268baf12d9e",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "51534b3fab21b122f914a2f51ab81d70ec9359de9dcd655f36b2af50be94c289"
+  },
+  "id": "qyhYaztmT6jdBevHM7jdo",
+  "tags": []
+}
