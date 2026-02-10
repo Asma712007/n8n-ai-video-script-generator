@@ -28,3 +28,7 @@ scene-based video scripts using an AI agent and webhook input.
 2. Activate the workflow
 3. Call the webhook endpoint with a prompt
 4. Receive structured video script JSON
+
+
+## Workflow Preview
+![Workflow](workflow.png)
