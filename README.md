@@ -1,4 +1,4 @@
-# AI Video Script Generator (n8n)
+# AI Video Script Generator (n8n).
 
 This repository contains an n8n workflow that generates structured,
 scene-based video scripts using an AI agent and webhook input.
